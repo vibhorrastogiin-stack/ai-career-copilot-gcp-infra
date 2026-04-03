@@ -1,0 +1,6 @@
+project_id      = "ai-career-copilot-beta"
+region          = "us-west1"
+backend_image   = "us-west1-docker.pkg.dev/ai-career-copilot-beta/ai-career-copilot-beta-backend/backend:latest"
+frontend_url    = "https://beta.careermake.ai"
+app_from_email  = "noreply@careermake.ai"
+app_notify_email = "support@careermake.ai"
