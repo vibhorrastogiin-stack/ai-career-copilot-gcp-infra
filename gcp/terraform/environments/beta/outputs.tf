@@ -6,6 +6,14 @@ output "content_bucket_name" {
   value = module.storage.content_bucket_name
 }
 
+output "contact_notifications_topic" {
+  value = module.storage.contact_notifications_topic
+}
+
+output "contact_notifications_subscription" {
+  value = module.storage.contact_notifications_subscription
+}
+
 output "artifact_registry_repository" {
   value = module.artifact_registry.repository_id
 }

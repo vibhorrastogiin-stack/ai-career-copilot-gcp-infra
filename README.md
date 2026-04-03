@@ -73,20 +73,19 @@ The beta Terraform now provisions:
 
 - Artifact Registry repository for the backend image
 - Cloud Storage buckets for app content and contact payloads
+- Pub/Sub notifications for new objects in the contact bucket
 - Firestore `(default)` database in Native mode
 - Secret Manager placeholders for:
   - `jwt-secret`
   - `google-client-id`
   - `google-client-secret`
   - `openai-api-key`
-  - `sendgrid-api-key`
 - Cloud Run service wired with:
   - `APP_STATE_PROVIDER=gcp`
   - `APP_STORAGE_PROVIDER=gcp`
-  - `APP_EMAIL_PROVIDER=sendgrid`
   - GCS bucket names
   - frontend URL
-  - Secret Manager-backed env vars for auth, OpenAI, and SendGrid
+  - Secret Manager-backed env vars for auth and OpenAI
 
 ## Manual Prerequisites
 
@@ -102,11 +101,7 @@ Before deploy, set up these external dependencies:
   - `https://<cloud-run-backend-url>/login/oauth2/code/google`
 - add the frontend origin and login flow URLs as needed in the Google OAuth client
 
-3. SendGrid
-- create an API key
-- verify the sender domain or sender identity for `APP_FROM_EMAIL`
-
-4. DNS / frontend URL
+3. DNS / frontend URL
 - decide the beta frontend URL before Terraform apply
 - example: `https://beta.careermake.ai`
 
@@ -139,7 +134,6 @@ gcloud secrets versions add jwt-secret --data-file=-
 gcloud secrets versions add google-client-id --data-file=-
 gcloud secrets versions add google-client-secret --data-file=-
 gcloud secrets versions add openai-api-key --data-file=-
-gcloud secrets versions add sendgrid-api-key --data-file=-
 ```
 
 5. Build and push backend image to Artifact Registry.
@@ -155,3 +149,24 @@ gcloud secrets versions add sendgrid-api-key --data-file=-
 - roadmap generation
 - contact form
 - beta feedback
+
+## Contact And Beta Feedback Notifications
+
+The application no longer sends email directly for contact or beta feedback.
+
+Instead:
+- backend writes JSON payloads into the contact bucket
+- Cloud Storage emits `OBJECT_FINALIZE` events to Pub/Sub
+
+Current beta resources:
+- topic: `ai-career-copilot-beta-contact-events`
+- subscription: `ai-career-copilot-beta-contact-events-sub`
+
+Inspect recent events with:
+
+```bash
+gcloud pubsub subscriptions pull ai-career-copilot-beta-contact-events-sub \
+  --project=ai-career-copilot-beta \
+  --auto-ack \
+  --limit=10
+```

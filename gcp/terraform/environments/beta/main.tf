@@ -7,6 +7,7 @@ locals {
     "compute.googleapis.com",
     "firestore.googleapis.com",
     "iam.googleapis.com",
+    "pubsub.googleapis.com",
     "run.googleapis.com",
     "secretmanager.googleapis.com",
     "storage-api.googleapis.com",
@@ -18,7 +19,6 @@ locals {
     "google-client-id",
     "google-client-secret",
     "openai-api-key",
-    "sendgrid-api-key",
   ]
 
   backend_env = {
@@ -26,11 +26,8 @@ locals {
     FRONTEND_URL           = var.frontend_url
     APP_STATE_PROVIDER     = "gcp"
     APP_STORAGE_PROVIDER   = "gcp"
-    APP_EMAIL_PROVIDER     = "sendgrid"
     APP_CONTENT_BUCKET     = module.storage.content_bucket_name
     APP_CONTACT_BUCKET     = module.storage.contact_bucket_name
-    APP_FROM_EMAIL         = var.app_from_email
-    APP_NOTIFY_EMAIL       = var.app_notify_email
     GCP_PROJECT_ID         = var.project_id
     GCP_REGION             = var.region
   }
@@ -40,7 +37,6 @@ locals {
     GOOGLE_CLIENT_ID     = "google-client-id"
     GOOGLE_CLIENT_SECRET = "google-client-secret"
     OPENAI_API_KEY       = "openai-api-key"
-    SENDGRID_API_KEY     = "sendgrid-api-key"
   }
 
   backend_service_account_roles = [
