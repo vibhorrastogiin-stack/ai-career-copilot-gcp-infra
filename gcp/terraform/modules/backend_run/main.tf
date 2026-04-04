@@ -60,6 +60,7 @@ resource "google_cloud_run_v2_service" "backend" {
   project  = var.project_id
   location = var.region
   ingress  = "INGRESS_TRAFFIC_ALL"
+  invoker_iam_disabled = true
 
   template {
     service_account = google_service_account.backend.email
@@ -94,14 +95,6 @@ resource "google_cloud_run_v2_service" "backend" {
       max_instance_count = 5
     }
   }
-}
-
-resource "google_cloud_run_service_iam_member" "public_invoker" {
-  project  = var.project_id
-  location = var.region
-  service  = google_cloud_run_v2_service.backend.name
-  role     = "roles/run.invoker"
-  member   = "allUsers"
 }
 
 output "service_name" {
