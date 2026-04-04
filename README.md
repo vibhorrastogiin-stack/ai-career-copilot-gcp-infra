@@ -20,8 +20,9 @@ This repo is intentionally separate from the AWS CDK repo because the target pla
 Current scope is:
 
 1. Stand up foundational GCP infrastructure for beta.
-2. Provide a clean place to iterate on GCP deployment without touching AWS CDK.
-3. Document the backend integration changes needed to run on GCP services.
+2. Stand up matching production infrastructure.
+3. Provide a clean place to iterate on GCP deployment without touching AWS CDK.
+4. Document the backend integration changes needed to run on GCP services.
 
 Out of scope for now:
 
@@ -32,6 +33,7 @@ Out of scope for now:
 ## Directory Layout
 
 - `gcp/terraform/environments/beta`: beta environment root module
+- `gcp/terraform/environments/prod`: production environment root module
 - `gcp/terraform/modules`: reusable Terraform modules
 - `BACKEND_GCP_PORTING.md`: application-layer changes required in the backend
 - `gcp/terraform/environments/beta/terraform.tfvars.example`: example beta inputs
@@ -59,13 +61,37 @@ This keeps the environment model simple:
 - no AWS data migration path
 - no local-only cloud namespace for now
 
+## Deployment Model
+
+Terraform owns the long-lived infrastructure:
+
+- Artifact Registry
+- Cloud Run service scaffold
+- Firestore
+- Cloud Storage
+- Secret Manager
+- Pub/Sub
+
+Deployment pipelines own application revisions:
+
+- backend repo uses `cloudbuild.deploy.yaml`
+- Cloud Build trigger builds the image, pushes to Artifact Registry, and updates the existing Cloud Run service
+- frontend repo uses Firebase App Hosting with:
+  - `apphosting.yaml`
+  - `apphosting.beta.yaml`
+  - `apphosting.prod.yaml`
+
+This avoids rebuilding or redeploying from a developer laptop for normal beta/prod changes.
+
 ## Immediate Next Steps
 
 1. Create and configure the `ai-career-copilot-beta` GCP project in `us-west1`.
-2. Populate Secret Manager with backend secrets.
-3. Apply the beta Terraform environment.
-4. Build and push the backend image into Artifact Registry.
-5. Deploy the frontend to Firebase App Hosting.
+2. Create and configure the `ai-career-copilot-prod` GCP project in `us-west1`.
+3. Populate Secret Manager with backend secrets.
+4. Apply the beta Terraform environment.
+5. Apply the prod Terraform environment.
+6. Create backend Cloud Build triggers.
+7. Connect the frontend repo to Firebase App Hosting for beta and prod.
 
 ## Beta Runtime Shape
 
@@ -105,12 +131,13 @@ Before deploy, set up these external dependencies:
 - decide the beta frontend URL before Terraform apply
 - example: `https://beta.careermake.ai`
 
-## Deploy Sequence
+## Bootstrap Sequence
 
 1. Copy the example tfvars:
 
 ```bash
 cp gcp/terraform/environments/beta/terraform.tfvars.example gcp/terraform/environments/beta/terraform.tfvars
+cp gcp/terraform/environments/prod/terraform.tfvars.example gcp/terraform/environments/prod/terraform.tfvars
 ```
 
 2. Fill in:
@@ -125,6 +152,10 @@ cp gcp/terraform/environments/beta/terraform.tfvars.example gcp/terraform/enviro
 cd gcp/terraform/environments/beta
 terraform init
 terraform apply
+
+cd ../prod
+terraform init
+terraform apply
 ```
 
 4. Create secret versions for all required secrets after the secrets exist:
@@ -136,11 +167,32 @@ gcloud secrets versions add google-client-secret --data-file=-
 gcloud secrets versions add openai-api-key --data-file=-
 ```
 
-5. Build and push backend image to Artifact Registry.
+5. Add the real Cloud Run backend URL to the Google OAuth client callback list.
 
-6. Re-apply Terraform with the final image URL if needed.
+6. Create Cloud Build triggers for the backend repo:
+- beta trigger:
+  - config file: `cloudbuild.deploy.yaml`
+  - branch: recommended `beta`
+  - substitutions:
+    - `_REGION=us-west1`
+    - `_REPOSITORY=ai-career-copilot-beta-backend`
+    - `_SERVICE_NAME=ai-career-copilot-beta-backend`
+  - project: `ai-career-copilot-beta`
+- prod trigger:
+  - config file: `cloudbuild.deploy.yaml`
+  - branch: recommended `main`
+  - substitutions:
+    - `_REGION=us-west1`
+    - `_REPOSITORY=ai-career-copilot-prod-backend`
+    - `_SERVICE_NAME=ai-career-copilot-prod-backend`
+  - project: `ai-career-copilot-prod`
 
-7. Add the real Cloud Run backend URL to the Google OAuth client callback list.
+7. Connect the frontend repo to Firebase App Hosting:
+- beta backend:
+  - environment config file: `apphosting.beta.yaml`
+- prod backend:
+  - environment config file: `apphosting.prod.yaml`
+- update `NEXT_PUBLIC_API_BASE` in those files once backend URLs are known
 
 8. Smoke test:
 - OAuth login
@@ -170,3 +222,14 @@ gcloud pubsub subscriptions pull ai-career-copilot-beta-contact-events-sub \
   --auto-ack \
   --limit=10
 ```
+
+## Cost Posture
+
+Recommended low-cost defaults:
+
+- Cloud Run `min_instance_count = 0`
+- small Cloud Run `max_instance_count`
+- request-driven revisions
+- keep beta and prod as separate projects
+
+Cloud Run can scale to zero when idle, so beta should stay inexpensive if traffic is low and you avoid unnecessary warm instances.
