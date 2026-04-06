@@ -52,4 +52,4 @@ Because the product is not live yet, this migration can be treated as a greenfie
 
 - local development uses the beta GCP project directly
 - beta and local share the same non-production cloud resources for now
-- production will use a separate project: `ai-career-copilot-prod`
+- production will use a separate project: `careermake-prod`

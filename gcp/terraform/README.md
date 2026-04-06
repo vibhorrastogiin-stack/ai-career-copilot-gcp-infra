@@ -19,6 +19,14 @@ It does not yet provision:
 - Firebase App Hosting
 - custom domains
 - CI/CD triggers
+- Cloud Deploy resources
+
+Cloud Deploy release assets currently live in the backend repo:
+
+- `skaffold.yaml`
+- `deploy/clouddeploy/pipeline.yaml`
+- `deploy/cloudrun/beta/service.yaml`
+- `deploy/cloudrun/prod/service.yaml`
 
 ## Expected Inputs
 

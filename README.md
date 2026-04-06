@@ -43,7 +43,7 @@ Out of scope for now:
 GCP projects:
 
 - `ai-career-copilot-beta`
-- `ai-career-copilot-prod`
+- `careermake-prod`
 
 Region:
 
@@ -86,7 +86,7 @@ This avoids rebuilding or redeploying from a developer laptop for normal beta/pr
 ## Immediate Next Steps
 
 1. Create and configure the `ai-career-copilot-beta` GCP project in `us-west1`.
-2. Create and configure the `ai-career-copilot-prod` GCP project in `us-west1`.
+2. Create and configure the `careermake-prod` GCP project in `us-west1`.
 3. Populate Secret Manager with backend secrets.
 4. Apply the beta Terraform environment.
 5. Apply the prod Terraform environment.
@@ -185,7 +185,7 @@ gcloud secrets versions add openai-api-key --data-file=-
     - `_REGION=us-west1`
     - `_REPOSITORY=ai-career-copilot-prod-backend`
     - `_SERVICE_NAME=ai-career-copilot-prod-backend`
-  - project: `ai-career-copilot-prod`
+  - project: `careermake-prod`
 
 7. Connect the frontend repo to Firebase App Hosting:
 - beta backend:
