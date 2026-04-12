@@ -28,7 +28,6 @@ Out of scope for now:
 
 - live data migration from AWS
 - production cutover
-- CI/CD triggers and deployment automation details beyond the initial scaffold
 
 ## Directory Layout
 
@@ -75,7 +74,9 @@ Terraform owns the long-lived infrastructure:
 Deployment pipelines own application revisions:
 
 - backend repo uses `cloudbuild.deploy.yaml`
-- Cloud Build trigger builds the image, pushes to Artifact Registry, and updates the existing Cloud Run service
+- beta Terraform now owns the backend beta trigger, Cloud Deploy pipeline, targets, and automation
+- Cloud Build trigger builds the image, pushes to Artifact Registry, and creates a Cloud Deploy release
+- Cloud Deploy deploys to beta first, then auto-creates the prod rollout which waits for approval
 - frontend repo uses Firebase App Hosting with:
   - `apphosting.yaml`
   - `apphosting.beta.yaml`
@@ -90,7 +91,7 @@ This avoids rebuilding or redeploying from a developer laptop for normal beta/pr
 3. Populate Secret Manager with backend secrets.
 4. Apply the beta Terraform environment.
 5. Apply the prod Terraform environment.
-6. Create backend Cloud Build triggers.
+6. Import or apply the Terraform-managed backend CI/CD resources in beta.
 7. Connect the frontend repo to Firebase App Hosting for beta and prod.
 
 ## Beta Runtime Shape
@@ -169,23 +170,18 @@ gcloud secrets versions add openai-api-key --data-file=-
 
 5. Add the real Cloud Run backend URL to the Google OAuth client callback list.
 
-6. Create Cloud Build triggers for the backend repo:
-- beta trigger:
+6. Backend CI/CD is owned from the beta Terraform environment:
+- Cloud Build trigger:
+  - name: `backend-beta-deploy`
   - config file: `cloudbuild.deploy.yaml`
-  - branch: recommended `beta`
-  - substitutions:
-    - `_REGION=us-west1`
-    - `_REPOSITORY=ai-career-copilot-beta-backend`
-    - `_SERVICE_NAME=ai-career-copilot-beta-backend`
+  - branch: `main`
   - project: `ai-career-copilot-beta`
-- prod trigger:
-  - config file: `cloudbuild.deploy.yaml`
-  - branch: recommended `main`
-  - substitutions:
-    - `_REGION=us-west1`
-    - `_REPOSITORY=ai-career-copilot-prod-backend`
-    - `_SERVICE_NAME=ai-career-copilot-prod-backend`
-  - project: `careermake-prod`
+- Cloud Deploy:
+  - delivery pipeline: `ai-career-copilot-backend`
+  - beta target: `ai-career-copilot-beta`
+  - prod target: `ai-career-copilot-prod`
+  - automation: successful beta rollout auto-creates the prod rollout
+  - prod rollout still requires approval
 
 7. Connect the frontend repo to Firebase App Hosting:
 - beta backend:

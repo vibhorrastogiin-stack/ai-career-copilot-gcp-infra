@@ -13,20 +13,25 @@ The current Terraform provisions the backend-side beta stack:
 - Artifact Registry
 - Secret Manager secret placeholders
 - Cloud Run backend
+- Cloud Build backend trigger
+- Cloud Deploy pipeline and targets
+- Cloud Deploy automation for beta -> prod rollout creation
+- CI/CD IAM bindings required by the trigger and deploy runner
 
 It does not yet provision:
 
 - Firebase App Hosting
 - custom domains
-- CI/CD triggers
-- Cloud Deploy resources
 
-Cloud Deploy release assets currently live in the backend repo:
+Cloud Deploy release assets still live in the backend repo:
 
 - `skaffold.yaml`
-- `deploy/clouddeploy/pipeline.yaml`
+- `cloudbuild.deploy.yaml`
+- `cloudbuild.release.yaml`
 - `deploy/cloudrun/beta/service.yaml`
 - `deploy/cloudrun/prod/service.yaml`
+
+Terraform now owns the long-lived GCP resource wiring for those assets in the beta project.
 
 ## Expected Inputs
 

@@ -56,10 +56,10 @@ resource "google_project_iam_member" "backend_service_account_roles" {
 }
 
 resource "google_cloud_run_v2_service" "backend" {
-  name     = var.service_name
-  project  = var.project_id
-  location = var.region
-  ingress  = "INGRESS_TRAFFIC_ALL"
+  name                 = var.service_name
+  project              = var.project_id
+  location             = var.region
+  ingress              = "INGRESS_TRAFFIC_ALL"
   invoker_iam_disabled = true
 
   template {
@@ -94,6 +94,16 @@ resource "google_cloud_run_v2_service" "backend" {
       min_instance_count = 0
       max_instance_count = 5
     }
+  }
+
+  lifecycle {
+    ignore_changes = [
+      client,
+      client_version,
+      scaling,
+      template[0].labels,
+      template[0].containers[0].image,
+    ]
   }
 }
 

@@ -13,3 +13,9 @@ provider "google" {
   project = var.project_id
   region  = var.region
 }
+
+provider "google" {
+  alias   = "prod"
+  project = var.prod_project_id
+  region  = var.region
+}

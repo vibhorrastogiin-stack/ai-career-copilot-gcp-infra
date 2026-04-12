@@ -15,6 +15,30 @@ variable "app_name" {
   default     = "ai-career-copilot"
 }
 
+variable "prod_project_id" {
+  description = "Production GCP project ID used by Cloud Deploy promotion targets."
+  type        = string
+  default     = "careermake-prod"
+}
+
+variable "backend_repo_owner" {
+  description = "GitHub owner for the backend repository."
+  type        = string
+  default     = "vibhorrastogiin-stack"
+}
+
+variable "backend_repo_name" {
+  description = "GitHub repository name for the backend."
+  type        = string
+  default     = "ai-career-copilot-backend"
+}
+
+variable "backend_trigger_branch_regex" {
+  description = "Branch regex for the backend beta trigger."
+  type        = string
+  default     = "^main$"
+}
+
 variable "backend_image" {
   description = "Artifact Registry image URL for the backend."
   type        = string
