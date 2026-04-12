@@ -190,6 +190,12 @@ resource "google_service_account_iam_member" "runner_act_as_runner" {
   member             = "serviceAccount:${google_service_account.cloud_deploy_runner.email}"
 }
 
+resource "google_service_account_iam_member" "build_service_account_act_as_runner" {
+  service_account_id = google_service_account.cloud_deploy_runner.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${local.cloud_build_service_account_email}"
+}
+
 resource "google_service_account_iam_member" "runner_act_as_beta_runtime" {
   service_account_id = "projects/${var.project_id}/serviceAccounts/${local.beta_backend_service_account_email}"
   role               = "roles/iam.serviceAccountUser"
@@ -244,6 +250,7 @@ resource "google_clouddeploy_target" "beta" {
   depends_on = [
     module.project_services,
     google_project_iam_member.beta_cloud_deploy_runner_roles,
+    google_service_account_iam_member.build_service_account_act_as_runner,
     google_service_account_iam_member.runner_act_as_runner,
     google_service_account_iam_member.runner_act_as_beta_runtime,
   ]
@@ -269,6 +276,7 @@ resource "google_clouddeploy_target" "prod" {
     module.project_services,
     google_project_iam_member.prod_cloud_deploy_runner_run_admin,
     google_project_iam_member.prod_runtime_artifact_reader_in_beta,
+    google_service_account_iam_member.build_service_account_act_as_runner,
     google_service_account_iam_member.runner_act_as_runner,
     google_service_account_iam_member.runner_act_as_prod_runtime,
   ]
@@ -322,6 +330,7 @@ resource "google_clouddeploy_automation" "auto_promote_to_prod" {
 
   depends_on = [
     google_clouddeploy_delivery_pipeline.backend,
+    google_service_account_iam_member.build_service_account_act_as_runner,
     google_service_account_iam_member.runner_act_as_runner,
   ]
 }
